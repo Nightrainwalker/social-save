@@ -11,7 +11,7 @@ export interface VideoMetadata {
   platform: Platform;
   thumbnailUrl: string;
   downloadUrl: string;
-  isDemo?: boolean; // New flag to indicate this is a simulation
+  isDemo?: boolean;
 }
 
 export interface AnalysisState {
@@ -25,4 +25,8 @@ export interface HistoryItem {
   url: string;
   timestamp: number;
   metadata?: VideoMetadata;
+}
+
+export interface AppSettings {
+  rapidApiKey: string;
 }
