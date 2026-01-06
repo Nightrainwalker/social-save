@@ -8,10 +8,15 @@ export interface VideoMetadata {
   title: string;
   author: string;
   description: string;
-  hashtags: string[];
   platform: Platform;
-  thumbnailUrl?: string; // We might get this from search or placeholder
-  estimatedDuration?: string;
+  thumbnailUrl: string;
+  downloadUrl: string;
+}
+
+export interface AnalysisState {
+  status: 'idle' | 'analyzing' | 'success' | 'error';
+  error?: string;
+  data?: VideoMetadata;
 }
 
 export interface HistoryItem {
@@ -19,12 +24,4 @@ export interface HistoryItem {
   url: string;
   timestamp: number;
   metadata?: VideoMetadata;
-}
-
-export type DownloadQuality = 'SD' | 'HD' | 'Audio';
-
-export interface AnalysisState {
-  status: 'idle' | 'analyzing' | 'success' | 'error';
-  error?: string;
-  data?: VideoMetadata;
 }
