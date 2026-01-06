@@ -11,6 +11,7 @@ export interface VideoMetadata {
   platform: Platform;
   thumbnailUrl: string;
   downloadUrl: string;
+  isDemo?: boolean; // New flag to indicate this is a simulation
 }
 
 export interface AnalysisState {
