@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { VideoMetadata, Platform } from '../types';
-import { Download, Facebook, Instagram, AlertCircle, CheckCircle, Loader2, ExternalLink } from 'lucide-react';
+import { Download, Facebook, Instagram, AlertCircle, CheckCircle, Loader2, ExternalLink, TestTube2 } from 'lucide-react';
 
 interface VideoResultCardProps {
   metadata: VideoMetadata;
@@ -57,21 +57,35 @@ export const VideoResultCard: React.FC<VideoResultCardProps> = ({ metadata, onRe
           <div className={`p-2 rounded-lg bg-slate-700/50 ${platformColor}`}>
             <PlatformIcon size={24} />
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-white line-clamp-1">{metadata.title}</h3>
-            <p className="text-sm text-slate-400">Ready for download</p>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white line-clamp-1">{metadata.title}</h3>
+              {metadata.isDemo && (
+                <span className="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1 font-medium whitespace-nowrap">
+                  <TestTube2 size={10} /> Demo
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-400">
+              {metadata.isDemo ? "Simulated Result (Backend Required for Real Data)" : "Ready for download"}
+            </p>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
           {/* Thumbnail */}
           <div className="w-full md:w-1/3 shrink-0">
-             <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-lg">
+             <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-lg relative group">
                 <img 
                   src={metadata.thumbnailUrl} 
                   alt={metadata.title} 
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
                 />
+                {metadata.isDemo && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">Preview</span>
+                  </div>
+                )}
              </div>
           </div>
 
@@ -120,7 +134,9 @@ export const VideoResultCard: React.FC<VideoResultCardProps> = ({ metadata, onRe
       <div className="bg-slate-900/50 p-3 border-t border-slate-700/50 flex items-center gap-2">
         <AlertCircle size={14} className="text-slate-500 shrink-0" />
         <p className="text-xs text-slate-500">
-          If the download doesn't start, check your pop-up blocker.
+          {metadata.isDemo 
+            ? "Note: This is a demo download. Real social media downloading requires a backend server."
+            : "If the download doesn't start, check your pop-up blocker."}
         </p>
       </div>
     </div>
