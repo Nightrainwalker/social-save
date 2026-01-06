@@ -1,0 +1,5 @@
+{
+  "name": "SocialSave",
+  "description": "A fast social media video downloader helper that analyzes Facebook and Instagram links locally.",
+  "requestFramePermissions": []
+}
