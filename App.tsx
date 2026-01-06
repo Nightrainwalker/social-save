@@ -1,26 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { Link, AlertTriangle, Zap, Settings, X, Key, ShieldCheck } from 'lucide-react';
 import { analyzeVideoUrl, detectPlatform } from './services/geminiService';
-import { AnalysisState, Platform, AppSettings } from './types';
+import { AnalysisState, Platform, AppSettings, HistoryItem, VideoMetadata } from './types';
 import { VideoResultCard } from './components/VideoResultCard';
+import { HistoryList } from './components/HistoryList';
 
 const App: React.FC = () => {
   const [url, setUrl] = useState('');
   const [analysisState, setAnalysisState] = useState<AnalysisState>({ status: 'idle' });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>({ rapidApiKey: '' });
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  // Load settings from local storage on mount
+  // Load settings and history from local storage on mount
   useEffect(() => {
     const savedKey = localStorage.getItem('social_save_api_key');
     if (savedKey) {
       setSettings({ rapidApiKey: savedKey });
+    }
+
+    const savedHistory = localStorage.getItem('social_save_history');
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Failed to parse history");
+      }
     }
   }, []);
 
   const saveSettings = (newKey: string) => {
     setSettings({ rapidApiKey: newKey });
     localStorage.setItem('social_save_api_key', newKey);
+  };
+
+  const addToHistory = (url: string, metadata: VideoMetadata) => {
+    const newItem: HistoryItem = {
+      id: Date.now().toString(),
+      url,
+      timestamp: Date.now(),
+      metadata
+    };
+    
+    // Keep only the last 5 items to keep UI clean, filter out duplicates of the same URL
+    const newHistory = [newItem, ...history.filter(h => h.url !== url)].slice(0, 5);
+    setHistory(newHistory);
+    localStorage.setItem('social_save_history', JSON.stringify(newHistory));
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('social_save_history');
   };
 
   const handleAnalyze = async () => {
@@ -41,12 +71,19 @@ const App: React.FC = () => {
       // Pass the API key to the service
       const metadata = await analyzeVideoUrl(url, settings.rapidApiKey);
       setAnalysisState({ status: 'success', data: metadata });
+      addToHistory(url, metadata);
     } catch (error: any) {
       setAnalysisState({ 
         status: 'error', 
         error: error.message || "Failed to process video. Please check the URL." 
       });
     }
+  };
+
+  const handleHistorySelect = (historyUrl: string) => {
+    setUrl(historyUrl);
+    // Automatically trigger analysis for better UX, or just fill input
+    // handleAnalyze(); // Uncomment if you want auto-submit
   };
 
   const handlePaste = async () => {
@@ -68,7 +105,7 @@ const App: React.FC = () => {
       
       <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={reset}>
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
               <DownloadIcon className="text-white w-5 h-5" />
             </div>
@@ -98,8 +135,8 @@ const App: React.FC = () => {
 
         {/* Input Area */}
         {analysisState.status !== 'success' && (
-          <div className="w-full max-w-xl animate-in fade-in zoom-in-95 duration-300">
-            <div className="relative flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 transition-all shadow-lg">
+          <div className="w-full max-w-xl animate-in fade-in zoom-in-95 duration-300 flex flex-col items-center">
+            <div className="w-full relative flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500 transition-all shadow-lg">
               <div className="pl-4 text-slate-500">
                 <Link size={20} />
               </div>
@@ -142,6 +179,13 @@ const App: React.FC = () => {
                 Running in <span className="text-amber-400">Demo Mode</span>. Add an API Key in settings for real downloads.
               </p>
             )}
+
+            {/* History List */}
+            <HistoryList 
+              history={history} 
+              onClear={clearHistory} 
+              onSelect={handleHistorySelect} 
+            />
           </div>
         )}
 
