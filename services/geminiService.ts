@@ -43,6 +43,7 @@ export const analyzeVideoUrl = async (url: string): Promise<VideoMetadata> => {
     thumbnailUrl: `https://picsum.photos/seed/${id}/600/400`,
     // IMPORTANT: This is a direct link to a sample MP4 that supports cross-origin downloading.
     // In a real production app, this would be the scraped URL from the backend.
-    downloadUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+    downloadUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    isDemo: true // Explicitly mark as demo
   };
 };
