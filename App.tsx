@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
-import { Link, AlertTriangle, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, AlertTriangle, Zap, Settings, X, Key, ShieldCheck } from 'lucide-react';
 import { analyzeVideoUrl, detectPlatform } from './services/geminiService';
-import { AnalysisState, Platform } from './types';
+import { AnalysisState, Platform, AppSettings } from './types';
 import { VideoResultCard } from './components/VideoResultCard';
 
 const App: React.FC = () => {
   const [url, setUrl] = useState('');
   const [analysisState, setAnalysisState] = useState<AnalysisState>({ status: 'idle' });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>({ rapidApiKey: '' });
+
+  // Load settings from local storage on mount
+  useEffect(() => {
+    const savedKey = localStorage.getItem('social_save_api_key');
+    if (savedKey) {
+      setSettings({ rapidApiKey: savedKey });
+    }
+  }, []);
+
+  const saveSettings = (newKey: string) => {
+    setSettings({ rapidApiKey: newKey });
+    localStorage.setItem('social_save_api_key', newKey);
+  };
 
   const handleAnalyze = async () => {
     if (!url.trim()) return;
@@ -23,12 +38,13 @@ const App: React.FC = () => {
     setAnalysisState({ status: 'analyzing' });
 
     try {
-      const metadata = await analyzeVideoUrl(url);
+      // Pass the API key to the service
+      const metadata = await analyzeVideoUrl(url, settings.rapidApiKey);
       setAnalysisState({ status: 'success', data: metadata });
     } catch (error: any) {
       setAnalysisState({ 
         status: 'error', 
-        error: "Failed to process video. Please check the URL." 
+        error: error.message || "Failed to process video. Please check the URL." 
       });
     }
   };
@@ -58,6 +74,14 @@ const App: React.FC = () => {
             </div>
             <span className="font-bold text-xl tracking-tight">Social<span className="text-indigo-400">Save</span></span>
           </div>
+          
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${settings.rapidApiKey ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'hover:bg-slate-800 text-slate-400'}`}
+          >
+            {settings.rapidApiKey ? <ShieldCheck size={18} /> : <Settings size={20} />}
+            {settings.rapidApiKey ? 'Real Mode' : 'Settings'}
+          </button>
         </div>
       </nav>
 
@@ -112,6 +136,12 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
+            
+            {!settings.rapidApiKey && (
+              <p className="text-center text-xs text-slate-500 mt-4">
+                Running in <span className="text-amber-400">Demo Mode</span>. Add an API Key in settings for real downloads.
+              </p>
+            )}
           </div>
         )}
 
@@ -129,6 +159,62 @@ const App: React.FC = () => {
         )}
 
       </main>
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
+            <button 
+              onClick={() => setIsSettingsOpen(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+            
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Settings className="text-indigo-500" /> Configuration
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  RapidAPI Key (Optional)
+                </label>
+                <div className="relative">
+                  <Key size={16} className="absolute left-3 top-3 text-slate-500" />
+                  <input 
+                    type="password" 
+                    value={settings.rapidApiKey}
+                    onChange={(e) => saveSettings(e.target.value)}
+                    placeholder="Enter RapidAPI Key..."
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  To enable real downloads, get a free key for 
+                  <a href="https://rapidapi.com/ugo-p-uBRXk4/api/social-media-video-downloader" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline mx-1">
+                    Social Media Video Downloader
+                  </a> 
+                  on RapidAPI. Without a key, the app runs in Demo Mode.
+                </p>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-3 text-xs text-slate-400 border border-slate-700/50">
+                <strong>Privacy Note:</strong> Your API Key is stored locally in your browser and is never sent to our servers.
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button 
+                onClick={() => setIsSettingsOpen(false)}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
