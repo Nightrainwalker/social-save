@@ -73,7 +73,7 @@ export const analyzeVideoUrl = async (url: string, apiKey?: string): Promise<Vid
     try {
       return await fetchFromRapidAPI(url, apiKey);
     } catch (error: any) {
-      console.warn("Real API failed, falling back to demo...", error.message);
+      console.warn("Real API failed with error:", error.message);
       // Optional: Re-throw if you want to stop completely, or fall through to demo
       if (error.message.includes("Invalid API Key")) {
         throw new Error("Your API Key is invalid or expired. Please check settings.");
